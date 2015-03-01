@@ -4,6 +4,7 @@ import configparser
 import os.path
 import sys
 import re
+import requests
 
 log = lambda s : print(time.strftime("%Y-%m-%d %H:%M:%S")+": "+str(s))
 
@@ -100,21 +101,21 @@ while True:
     except KeyboardInterrupt:
         log("Stopped by user")
         sys.exit(0)
-    except praw.errors.APIException:
-        log("ApiException, sleeping five minutes")
+    except praw.errors.APIException as e:
+        log("ApiException, %s, sleeping five minutes" %e)
         time.sleep(5*60)
-    except praw.errors.ClientException:
-        log("ClientException, reconnecting and sleeping one minute")
+    except praw.errors.ClientException as e:
+        log("ClientException, %s, reconnecting and sleeping one minute" %e)
         time.sleep(60)
         reddit.login(username=username,password=password)
     except praw.errors.InvalidCaptcha:
         log("InvalidCaptcha, waiting five minutes")
         time.sleep(5*60)
-    except praw.errors.InvalidComment:
-        log("InvalidComment, retrying")
+    except praw.errors.InvalidComment as e:
+        log("InvalidComment, %s, retrying" %e)
         pass
-    except praw.errors.InvalidSubreddit:
-        log("InvalidSubreddit, quitting")
+    except praw.errors.InvalidSubreddit as e:
+        log("InvalidSubreddit, %s, quitting" %e)
         sys.exit(1)
     except praw.errors.LoginRequired:
         log("LoginRequired, reconnecting")
@@ -125,4 +126,7 @@ while True:
     except praw.errors.RateLimitExceeded:
         log("RateLimitExceeded, we are commenting to much. Waiting two minutes")
         time.sleep(2*60)
+    except requests.exceptions.HTTPError as e:
+        log("HTTPError, %s, waiting a minute" % e)
+        time.sleep(60)
 
