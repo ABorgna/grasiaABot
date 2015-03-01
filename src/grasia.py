@@ -51,7 +51,7 @@ log("Logged in as "+username)
 
 # Beware of the regular expressions
 
-phrases = { r"(gra[scz]i(a|ela))[sz']?": r"no, \1 a vo'",
+phrases = { r"(gra[scz]i(a|ela))[sz']?": r"no, grasi\2 a vo'",
             r"thank(s| you)": r"no, thank you"}
 phrases = [(re.compile(key,re.I),phrases[key]) for key in phrases]
 
@@ -86,7 +86,7 @@ while True:
                     match = regex.search(text)
 
                     if match:
-                        reply = match.expand(reply)
+                        reply = match.expand(reply).lower()
                         comment.reply(reply)
 
                         log("Replied \"" + reply + "\" to a " + user + "'s comment,"
@@ -100,7 +100,26 @@ while True:
     except KeyboardInterrupt:
         log("Stopped by user")
         sys.exit(0)
-    except RateLimitExceeded:
-        log("RateLimitExceeded, sleeping five minutes")
+    except ApiException:
+        log("ApiException, sleeping five minutes")
         time.sleep(5*60)
+    except ClientException:
+        log("ClientException, reconnecting and sleeping one minute")
+        time.sleep(60)
+        reddit.login(username=username,password=password)
+    except InvalidCaptcha:
+        log("InvalidCaptcha, waiting five minutes")
+        time.sleep(5*60)
+    except InvalidComment:
+        log("InvalidComment, retrying")
+        pass
+    except InvalidSubreddit:
+        log("InvalidSubreddit, quitting")
+        sys.exit(1)
+    except LoginRequired:
+        log("LoginRequired, reconnecting")
+        reddit.login(username=username,password=password)
+    except NotLoggedIn:
+        log("NotLoggedIn, reconnecting")
+        reddit.login(username=username,password=password)
 
