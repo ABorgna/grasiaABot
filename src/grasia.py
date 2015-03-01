@@ -5,7 +5,11 @@ import os.path
 import sys
 import re
 
-log = lambda s : print(time.strftime("%m-%d %H:%M")+": "+s)
+log = lambda s : print(time.strftime("%Y-%m-%d %H:%M:%S")+": "+str(s))
+
+# Set the working directory as the script's own directory
+
+os.chdir(os.path.dirname(sys.argv[0]))
 
 # Configuration
 
@@ -17,12 +21,12 @@ config["something"] = {"subreddits": ""} # Comma delimited
 config["praw"] = {"refresh_time": "5.0"}
 
 if os.path.isfile(configName):
-    config.read("config.cfg")
+    config.read(configName)
 else:
     with open(configName, "w") as configFile:
         config.write(configFile)
 
-if not config["credentials"]["username"] or not config["credentials"]["username"]:
+if not config["credentials"]["username"] or not config["credentials"]["password"]:
     log("Set an username and password in "+configName)
     sys.exit(1)
 
@@ -43,56 +47,57 @@ reddit = praw.Reddit("grasiabot"
                      "Url:github.com/ABorgna/graciaabot")
 reddit.login(username=username,password=password)
 
+log("Logged in as "+username)
+
 # Beware of the regular expressions
 
-phrases = { r"gra[scz]i(a[sz']?|ela)": r"no, \0 a vo'",
+phrases = { r"(gra[scz]i(a|ela))[sz']?": r"no, \1 a vo'",
             r"thank(s| you)": r"no, thank you"}
-phrases = [(re.compile(key),phrases[key]) for key in phrases]
+phrases = [(re.compile(key,re.I),phrases[key]) for key in phrases]
 
 # Main loop
 
 subredditsStr = config["something"]["subreddits"].replace(",","+")
-refreshTime = config["praw"]["refresh_time"]
+refreshTime = float(config["praw"]["refresh_time"])
 processed = set()
-lastScantime = time.time()
+startTimestamp = time.time()
 
-system.exit(0)
+log("Scanning subreddits "+subredditsStr)
 
 while True:
     try:
-        previousScantime = lastScantime
-        lastScantime = time.time()
-
         subreddits = reddit.get_subreddit(subredditsStr)
-        comments = praw.helpers.flatten_tree(subreddits.get_comments())
+        comments = subreddits.get_comments()
 
         count = 0
 
         for comment in comments:
-            count += 1
+            if comment.id not in processed and float(comment.created_utc) > startTimestamp:
+                count += 1
+                processed.add(comment.id)
 
-            if comment["id"] not in processed:
-                processed.add(comment["id"])
+                text = comment.body
+                user = comment.author.name
 
-                if float(comment["created_utc"]) > previousScantime:
-                    text = comment["selftext"]
-                    user = comment["author"]["user_name"]
+                if user == username:
+                    continue
 
-                    for (regex,reply) in phrases:
-                        match = regex.search(text, re.IGNORECASE)
+                for (regex,reply) in phrases:
+                    match = regex.search(text)
 
-                        if match:
-                            reply = match.expand(reply)
-                            comment.reply(reply)
+                    if match:
+                        reply = match.expand(reply)
+                        comment.reply(reply)
 
-                            log("Replied \"" + reply + " to a " + user + "'s comment,"
-                                "URL: " + comment.permalink)
-                            break
+                        log("Replied \"" + reply + "\" to a " + user + "'s comment,"
+                            "URL: " + comment.permalink)
+                        break
 
         log("Scanned " + str(count) + " comments")
 
         time.sleep(refreshTime)
 
-    except:
-        pass
+    except KeyboardInterrupt:
+        log("Stopped by user")
+        sys.exit(0)
 
