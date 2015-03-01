@@ -14,7 +14,7 @@ config = configparser.ConfigParser()
 config["credentials"] = {"username": "",
                          "password": ""}
 config["something"] = {"subreddits": ""} # Comma delimited
-config["praw"] = {"refresh_time": "5000"}
+config["praw"] = {"refresh_time": "5.0"}
 
 if os.path.isfile(configName):
     config.read("config.cfg")
@@ -30,9 +30,9 @@ if not config["something"]["subreddits"]:
     log("Specify some subreddits in "+configName)
     sys.exit(2)
 
-if int(config["praw"]["refresh_time"]) < 2000:
-    log("The refresh time is too short, using 2000 mS")
-    config["praw"]["refresh_time"] = 2000
+if float(config["praw"]["refresh_time"]) < 2.0:
+    log("The refresh time is too short, using 2 seconds")
+    config["praw"]["refresh_time"] = "2.0"
 
 # Connect to reddit
 
