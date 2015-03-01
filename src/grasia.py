@@ -100,4 +100,7 @@ while True:
     except KeyboardInterrupt:
         log("Stopped by user")
         sys.exit(0)
+    except RateLimitExceeded:
+        log("RateLimitExceeded, sleeping five minutes")
+        time.sleep(5*60)
 
