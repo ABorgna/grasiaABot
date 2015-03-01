@@ -100,26 +100,26 @@ while True:
     except KeyboardInterrupt:
         log("Stopped by user")
         sys.exit(0)
-    except ApiException:
+    except praw.errors.ApiException:
         log("ApiException, sleeping five minutes")
         time.sleep(5*60)
-    except ClientException:
+    except praw.errors.ClientException:
         log("ClientException, reconnecting and sleeping one minute")
         time.sleep(60)
         reddit.login(username=username,password=password)
-    except InvalidCaptcha:
+    except praw.errors.InvalidCaptcha:
         log("InvalidCaptcha, waiting five minutes")
         time.sleep(5*60)
-    except InvalidComment:
+    except praw.errors.InvalidComment:
         log("InvalidComment, retrying")
         pass
-    except InvalidSubreddit:
+    except praw.errors.InvalidSubreddit:
         log("InvalidSubreddit, quitting")
         sys.exit(1)
-    except LoginRequired:
+    except praw.errors.LoginRequired:
         log("LoginRequired, reconnecting")
         reddit.login(username=username,password=password)
-    except NotLoggedIn:
+    except praw.errors.NotLoggedIn:
         log("NotLoggedIn, reconnecting")
         reddit.login(username=username,password=password)
 
