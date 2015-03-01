@@ -100,7 +100,7 @@ while True:
     except KeyboardInterrupt:
         log("Stopped by user")
         sys.exit(0)
-    except praw.errors.ApiException:
+    except praw.errors.APIException:
         log("ApiException, sleeping five minutes")
         time.sleep(5*60)
     except praw.errors.ClientException:
@@ -122,4 +122,7 @@ while True:
     except praw.errors.NotLoggedIn:
         log("NotLoggedIn, reconnecting")
         reddit.login(username=username,password=password)
+    except praw.errors.RateLimitExceeded:
+        log("RateLimitExceeded, we are commenting to much. Waiting two minutes")
+        time.sleep(2*60)
 
