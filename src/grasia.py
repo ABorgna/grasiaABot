@@ -61,6 +61,7 @@ phrases = [(re.compile(key,re.I),phrases[key]) for key in phrases]
 subredditsStr = config["something"]["subreddits"].replace(",","+")
 refreshTime = float(config["praw"]["refresh_time"])
 processed = set()
+replyQueue = []
 startTimestamp = time.time()
 
 log("Scanning subreddits "+subredditsStr)
@@ -88,13 +89,19 @@ while True:
 
                     if match:
                         reply = match.expand(reply).lower()
-                        comment.reply(reply)
-
-                        log("Replied \"" + reply + "\" to a " + user + "'s comment,"
-                            "URL: " + comment.permalink)
+                        replyQueue.insert(0,(comment,reply))
                         break
 
         log("Scanned " + str(count) + " comments")
+
+        while replyQueue:
+            comment, reply = replyQueue[-1]
+            comment.reply(reply)
+            replyQueue.pop()
+
+            user = comment.author.name
+            log("Replied \"" + reply + "\" to a " + user + "'s comment,"
+                "URL: " + comment.permalink)
 
         time.sleep(refreshTime)
 
