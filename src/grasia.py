@@ -18,7 +18,8 @@ configName = "../config.cfg"
 config = configparser.ConfigParser()
 config["credentials"] = {"username": "",
                          "password": ""}
-config["something"] = {"subreddits": ""} # Comma delimited
+config["something"] = {"subreddits": "",
+                       "userignore": ""} # Comma delimited
 config["praw"] = {"refresh_time": "5.0"}
 
 if os.path.isfile(configName):
@@ -59,6 +60,7 @@ phrases = [(re.compile(key,re.I),phrases[key]) for key in phrases]
 # Main loop
 
 subredditsStr = config["something"]["subreddits"].replace(",","+")
+ignoredUsers = config["something"]["userignore"].split(",")
 refreshTime = float(config["praw"]["refresh_time"])
 processed = set()
 replyQueue = []
@@ -83,14 +85,17 @@ while True:
 
                 if user == username:
                     continue
+                elif user in ignoredUsers:
+                    reply = "no, a vo' no"
+                    replyQueue.insert(0,(comment,reply))
+                else:
+                    for (regex,reply) in phrases:
+                        match = regex.search(text)
 
-                for (regex,reply) in phrases:
-                    match = regex.search(text)
-
-                    if match:
-                        reply = match.expand(reply).lower()
-                        replyQueue.insert(0,(comment,reply))
-                        break
+                        if match:
+                            reply = match.expand(reply).lower()
+                            replyQueue.insert(0,(comment,reply))
+                            break
 
         log("Scanned " + str(count) + " comments")
 
