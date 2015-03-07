@@ -60,7 +60,7 @@ phrases = [(re.compile(key,re.I),phrases[key]) for key in phrases]
 # Main loop
 
 subredditsStr = config["something"]["subreddits"].replace(",","+")
-ignoredUsers = config["something"]["userignore"].split(",")
+ignoredUsers = [x.lower() for x in config["something"]["userignore"].split(",")]
 refreshTime = float(config["praw"]["refresh_time"])
 processed = set()
 replyQueue = []
@@ -81,12 +81,12 @@ while True:
                 processed.add(comment.id)
 
                 text = comment.body
-                user = comment.author.name
+                user = comment.author.name.lower()
 
-                if user == username:
+                if user == username.lower():
                     continue
                 elif user in ignoredUsers:
-                    reply = "no, a vo' no"
+                    reply = "e gato ke habla"
                     replyQueue.insert(0,(comment,reply))
                 else:
                     for (regex,reply) in phrases:
